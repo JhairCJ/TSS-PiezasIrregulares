@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+pydantic
+shapely
+numpy
+pyclipper
+deap
+python-multipart
