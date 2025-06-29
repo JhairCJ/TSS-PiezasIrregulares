@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Upload, Play, Settings, Download, Trash2, RotateCw, Move, Square, Info } from 'lucide-react';
+import { postNestData } from '../services/nestAPI'
 
 // Tipos TypeScript
 interface Point2D {
@@ -44,28 +45,6 @@ interface Offset {
   x: number;
   y: number;
 }
-
-// Servicio API
-const postNestData = async (data: NestingRequest): Promise<NestingResponse> => {
-  try {
-    const response = await fetch("http://127.0.0.1:8000/nest", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Error ${response.status}: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error("Error en la solicitud:", error);
-    throw error;
-  }
-};
 
 const NestingInterface: React.FC = () => {
   const [pieces, setPieces] = useState<PieceData[]>([]);
