@@ -1,0 +1,59 @@
+{
+    "pieces": [
+      {
+        "id": "pieza_1",
+        "points": [
+          {"x": 0, "y": 0},
+          {"x": 50, "y": 0},
+          {"x": 50, "y": 30},
+          {"x": 0, "y": 30}
+        ],
+        "quantity": 8
+      },
+      {
+        "id": "pieza_2",
+        "points": [
+          {"x": 0, "y": 0},
+          {"x": 40, "y": 0},
+          {"x": 40, "y": 40},
+          {"x": 0, "y": 40}
+        ],
+        "quantity": 6
+      },
+      {
+        "id": "pieza_3",
+        "points": [
+          {"x": 0, "y": 0},
+          {"x": 30, "y": 0},
+          {"x": 30, "y": 60},
+          {"x": 0, "y": 60}
+        ],
+        "quantity": 4
+      },
+      {
+        "id": "pieza_irregular",
+        "points": [
+          {"x": 0, "y": 0},
+          {"x": 25, "y": 0},
+          {"x": 35, "y": 15},
+          {"x": 25, "y": 35},
+          {"x": 0, "y": 35},
+          {"x": 10, "y": 15}
+        ],
+        "quantity": 10
+      },
+      {
+        "id": "triangulo",
+        "points": [
+          {"x": 0, "y": 0},
+          {"x": 30, "y": 0},
+          {"x": 15, "y": 26}
+        ],
+        "quantity": 12
+      }
+    ],
+    "bin_width": 200,
+    "bin_height": 150,
+    "algorithm": "bottom_left",
+    "rotation_step": 90
+  }

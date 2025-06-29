@@ -6,7 +6,7 @@ from deap import base, creator, tools, algorithms
 import random
 import math
 from typing import List, Tuple
-from models import Point2D
+from models import Point
 
 # Configurar DEAP
 creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
@@ -19,15 +19,15 @@ class NestingEngine:
         self.rotation_step = rotation_step
         self.nfp_cache = {}
         
-    def points_to_polygon(self, points: List[Point2D]) -> Polygon:
+    def points_to_polygon(self, points: List[Point]) -> Polygon:
         """Convierte lista de puntos a polígono de Shapely"""
         coords = [(p.x, p.y) for p in points]
         return Polygon(coords)
     
-    def polygon_to_points(self, polygon: Polygon) -> List[Point2D]:
+    def polygon_to_points(self, polygon: Polygon) -> List[Point]:
         """Convierte polígono de Shapely a lista de puntos"""
         coords = list(polygon.exterior.coords[:-1])  # Excluir último punto duplicado
-        return [Point2D(x=x, y=y) for x, y in coords]
+        return [Point(x=x, y=y) for x, y in coords]
     
     def normalize_polygon(self, polygon: Polygon) -> Polygon:
         """Normaliza polígono para que el punto más bajo izquierdo esté en (0,0)"""
