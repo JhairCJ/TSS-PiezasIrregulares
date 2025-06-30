@@ -2,7 +2,7 @@
 import type React from "react"
 import { useState, useRef, useEffect, useCallback } from "react"
 import { Upload, Play, Settings, Download, Trash2, RotateCw, Move, Square, Info, Plus, Eye, Edit3 } from "lucide-react"
-import { postNestData } from '../services/nestAPI'
+import { postNestData } from "../services/nestAPI"
 
 // Tipos TypeScript
 interface Point2D {
@@ -56,6 +56,7 @@ const NestingInterface: React.FC = () => {
   const [isDrawing, setIsDrawing] = useState<boolean>(false)
   const [viewMode, setViewMode] = useState<ViewMode>("design")
   const [selectedPiece, setSelectedPiece] = useState<number | null>(null)
+  const [units, setUnits] = useState<"mm" | "cm" | "m" | "in">("mm")
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -66,6 +67,86 @@ const NestingInterface: React.FC = () => {
   const MARGIN = 20
   const BIN_START_X = MARGIN
   const BIN_START_Y = MARGIN
+
+  // Conversiones de unidades
+  const unitConversions = {
+    mm: { factor: 1, label: "mm" },
+    cm: { factor: 0.1, label: "cm" },
+    m: { factor: 0.001, label: "m" },
+    in: { factor: 0.0393701, label: "in" },
+  }
+
+  const convertValue = (value: number, fromUnit = "mm"): number => {
+    return value * unitConversions[units].factor
+  }
+
+  const formatValue = (value: number): string => {
+    const converted = convertValue(value)
+    return `${converted.toFixed(converted < 1 ? 3 : 1)} ${unitConversions[units].label}`
+  }
+
+  // Calcular dimensiones de una pieza
+  const calculatePieceDimensions = (points: Point2D[]) => {
+    if (points.length === 0) return { width: 0, height: 0, area: 0 }
+
+    const xs = points.map((p) => p.x)
+    const ys = points.map((p) => p.y)
+    const minX = Math.min(...xs)
+    const maxX = Math.max(...xs)
+    const minY = Math.min(...ys)
+    const maxY = Math.max(...ys)
+
+    const width = maxX - minX
+    const height = maxY - minY
+
+    // Calcular área usando fórmula del shoelace
+    let area = 0
+    for (let i = 0; i < points.length; i++) {
+      const j = (i + 1) % points.length
+      area += points[i].x * points[j].y
+      area -= points[j].x * points[i].y
+    }
+    area = Math.abs(area) / 2
+
+    return { width, height, area }
+  }
+
+  // Crear SVG preview de una pieza
+  const createPiecePreview = (points: Point2D[], color: string) => {
+    if (points.length === 0) return null
+
+    const { width, height } = calculatePieceDimensions(points)
+    const padding = 5
+    const viewBoxWidth = Math.max(width + padding * 2, 60)
+    const viewBoxHeight = Math.max(height + padding * 2, 40)
+
+    // Normalizar puntos para el preview
+    const xs = points.map((p) => p.x)
+    const ys = points.map((p) => p.y)
+    const minX = Math.min(...xs)
+    const minY = Math.min(...ys)
+
+    const normalizedPoints = points.map((p) => ({
+      x: p.x - minX + padding,
+      y: p.y - minY + padding,
+    }))
+
+    const pathData =
+      normalizedPoints.reduce((path, point, index) => {
+        return path + (index === 0 ? `M ${point.x} ${point.y}` : ` L ${point.x} ${point.y}`)
+      }, "") + " Z"
+
+    return (
+      <svg
+        width="60"
+        height="40"
+        viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`}
+        className="border border-gray-200 rounded"
+      >
+        <path d={pathData} fill={color + "40"} stroke={color} strokeWidth="1" />
+      </svg>
+    )
+  }
 
   // Calcular escala para que el bin quepa en el área designada
   const availableWidth = CANVAS_WIDTH - MARGIN * 2
@@ -116,7 +197,7 @@ const NestingInterface: React.FC = () => {
       // Etiqueta del bin
       ctx.fillStyle = "#475569"
       ctx.font = "bold 14px sans-serif"
-      ctx.fillText(`Contenedor: ${binWidth} × ${binHeight} mm`, BIN_START_X, BIN_START_Y - 8)
+      ctx.fillText(`Contenedor: ${formatValue(binWidth)} × ${formatValue(binHeight)}`, BIN_START_X, BIN_START_Y - 8)
 
       if (viewMode === "result" && results) {
         // Dibujar piezas colocadas
@@ -212,7 +293,7 @@ const NestingInterface: React.FC = () => {
         ctx.fillText(instructions, BIN_START_X, CANVAS_HEIGHT - 10)
       }
     },
-    [pieces, results, binWidth, binHeight, scale, currentPiece, viewMode, currentTool, isDrawing],
+    [pieces, results, binWidth, binHeight, scale, currentPiece, viewMode, currentTool, isDrawing, units],
   )
 
   useEffect(() => {
@@ -318,8 +399,20 @@ const NestingInterface: React.FC = () => {
     setResults(null)
 
     try {
+      // Expandir piezas según su cantidad
+      const expandedPieces: PieceData[] = []
+      pieces.forEach((piece, index) => {
+        for (let i = 0; i < piece.quantity; i++) {
+          expandedPieces.push({
+            ...piece,
+            id: `${piece.id}_${i + 1}`,
+            quantity: 1,
+          })
+        }
+      })
+
       const requestData: NestingRequest = {
-        pieces,
+        pieces: expandedPieces,
         bin_width: binWidth,
         bin_height: binHeight,
         algorithm,
@@ -745,33 +838,61 @@ const NestingInterface: React.FC = () => {
                         <div
                           style={{
                             display: "flex",
-                            alignItems: "center",
+                            alignItems: "flex-start",
                             justifyContent: "space-between",
-                            marginBottom: "0.5rem",
+                            marginBottom: "0.75rem",
                           }}
                         >
-                          <h4
-                            style={{
-                              fontWeight: "600",
-                              color: "#111827",
-                              display: "flex",
-                              alignItems: "center",
-                              margin: 0,
-                            }}
-                          >
-                            <div
+                          <div style={{ flex: 1 }}>
+                            <h4
                               style={{
-                                width: "0.75rem",
-                                height: "0.75rem",
-                                borderRadius: "9999px",
-                                marginRight: "0.5rem",
-                                backgroundColor: ["#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", "#8b5cf6"][
-                                  index % 6
-                                ],
+                                fontWeight: "600",
+                                color: "#111827",
+                                display: "flex",
+                                alignItems: "center",
+                                margin: "0 0 0.5rem 0",
                               }}
-                            ></div>
-                            {piece.id}
-                          </h4>
+                            >
+                              <div
+                                style={{
+                                  width: "0.75rem",
+                                  height: "0.75rem",
+                                  borderRadius: "9999px",
+                                  marginRight: "0.5rem",
+                                  backgroundColor: ["#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", "#8b5cf6"][
+                                    index % 6
+                                  ],
+                                }}
+                              ></div>
+                              {piece.id}
+                            </h4>
+
+                            {/* Dimensiones */}
+                            <div style={{ fontSize: "0.75rem", color: "#6b7280", marginBottom: "0.5rem" }}>
+                              {(() => {
+                                const dims = calculatePieceDimensions(piece.points)
+                                return (
+                                  <div>
+                                    <div>
+                                      {formatValue(dims.width)} × {formatValue(dims.height)}
+                                    </div>
+                                    <div>
+                                      Área: {formatValue(dims.area)} {unitConversions[units].label}²
+                                    </div>
+                                  </div>
+                                )
+                              })()}
+                            </div>
+                          </div>
+
+                          {/* Preview de la pieza */}
+                          <div style={{ marginLeft: "0.5rem", marginRight: "0.5rem" }}>
+                            {createPiecePreview(
+                              piece.points,
+                              ["#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", "#8b5cf6"][index % 6],
+                            )}
+                          </div>
+
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
@@ -858,7 +979,7 @@ const NestingInterface: React.FC = () => {
                                   >
                                     <span>P{i + 1}:</span>
                                     <span>
-                                      ({point.x.toFixed(1)}, {point.y.toFixed(1)})
+                                      ({formatValue(point.x)}, {formatValue(point.y)})
                                     </span>
                                   </div>
                                 ))}
@@ -904,7 +1025,8 @@ const NestingInterface: React.FC = () => {
                         margin: "0.25rem 0 0 0",
                       }}
                     >
-                      Contenedor: {binWidth} × {binHeight} mm • Escala: {Math.round(scale * 100)}%
+                      Contenedor: {formatValue(binWidth)} × {formatValue(binHeight)} • Escala: {Math.round(scale * 100)}
+                      %
                     </p>
                   </div>
 
@@ -1105,6 +1227,29 @@ const NestingInterface: React.FC = () => {
                       onChange={(e) => setBinHeight(Number(e.target.value))}
                       className="input-field"
                     />
+                  </div>
+                  <div>
+                    <label
+                      style={{
+                        display: "block",
+                        fontSize: "0.875rem",
+                        fontWeight: "500",
+                        color: "#374151",
+                        marginBottom: "0.5rem",
+                      }}
+                    >
+                      Unidades
+                    </label>
+                    <select
+                      value={units}
+                      onChange={(e) => setUnits(e.target.value as "mm" | "cm" | "m" | "in")}
+                      className="select-field"
+                    >
+                      <option value="mm">Milímetros (mm)</option>
+                      <option value="cm">Centímetros (cm)</option>
+                      <option value="m">Metros (m)</option>
+                      <option value="in">Pulgadas (in)</option>
+                    </select>
                   </div>
                 </div>
               </div>
