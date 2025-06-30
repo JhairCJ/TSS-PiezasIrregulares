@@ -1,59 +1,51 @@
 {
-    "pieces": [
-      {
-        "id": "pieza_1",
-        "points": [
-          {"x": 0, "y": 0},
-          {"x": 50, "y": 0},
-          {"x": 50, "y": 30},
-          {"x": 0, "y": 30}
-        ],
-        "quantity": 8
-      },
-      {
-        "id": "pieza_2",
-        "points": [
-          {"x": 0, "y": 0},
-          {"x": 40, "y": 0},
-          {"x": 40, "y": 40},
-          {"x": 0, "y": 40}
-        ],
-        "quantity": 6
-      },
-      {
-        "id": "pieza_3",
-        "points": [
-          {"x": 0, "y": 0},
-          {"x": 30, "y": 0},
-          {"x": 30, "y": 60},
-          {"x": 0, "y": 60}
-        ],
-        "quantity": 4
-      },
-      {
-        "id": "pieza_irregular",
-        "points": [
-          {"x": 0, "y": 0},
-          {"x": 25, "y": 0},
-          {"x": 35, "y": 15},
-          {"x": 25, "y": 35},
-          {"x": 0, "y": 35},
-          {"x": 10, "y": 15}
-        ],
-        "quantity": 10
-      },
-      {
-        "id": "triangulo",
-        "points": [
-          {"x": 0, "y": 0},
-          {"x": 30, "y": 0},
-          {"x": 15, "y": 26}
-        ],
-        "quantity": 12
-      }
-    ],
-    "bin_width": 200,
-    "bin_height": 150,
-    "algorithm": "bottom_left",
-    "rotation_step": 90
-  }
+  "pieces": [
+    {
+      "id": "rectangulo_1",
+      "points": [
+        [0, 0],
+        [50, 0],
+        [50, 30],
+        [0, 30]
+      ],
+      "quantity": 3
+    },
+    {
+      "id": "triangulo_1",
+      "points": [
+        [0, 0],
+        [40, 0],
+        [20, 35]
+      ],
+      "quantity": 2
+    },
+    {
+      "id": "L_shape",
+      "points": [
+        [0, 0],
+        [60, 0],
+        [60, 20],
+        [20, 20],
+        [20, 50],
+        [0, 50]
+      ],
+      "quantity": 2
+    },
+    {
+      "id": "pequeño_cuadrado",
+      "points": [
+        [0, 0],
+        [15, 0],
+        [15, 15],
+        [0, 15]
+      ],
+      "quantity": 5
+    }
+  ],
+  "bin_width": 200,
+  "bin_height": 150,
+  "allow_rotation": true,
+  "rotation_angles": [0, 90, 180, 270],
+  "margin": 2,
+  "strategy": "bottom_left"
+}

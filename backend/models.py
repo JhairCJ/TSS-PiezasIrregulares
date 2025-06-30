@@ -1,45 +1,40 @@
-from pydantic import BaseModel
-from typing import List, Optional, Dict, Any
+from pydantic import BaseModel, Field
+from typing import List, Dict, Optional, Tuple
 
-class Point(BaseModel):
-    x: float
-    y: float
-
-class PieceData(BaseModel):
-    id: str
-    points: List[Point]
-    quantity: int = 1
+class Piece(BaseModel):
+    id: str = Field(..., description="Identificador único de la pieza")
+    points: List[Tuple[float, float]] = Field(..., description="Lista de puntos que definen la forma")
+    quantity: int = Field(default=1, ge=1, description="Cantidad de piezas")
 
 class NestingRequest(BaseModel):
-    pieces: List[PieceData]
+    pieces: List[Piece] = Field(..., description="Lista de piezas a optimizar")
+    bin_width: float = Field(..., gt=0, description="Ancho del bin")
+    bin_height: float = Field(..., gt=0, description="Alto del bin")
+    allow_rotation: bool = Field(default=True, description="Permitir rotación")
+    rotation_angles: Optional[List[int]] = Field(default=None, description="Ángulos permitidos")
+    margin: float = Field(default=0, ge=0, description="Margen entre piezas")
+    strategy: str = Field(default="bottom_left", description="Estrategia de colocación")
+
+class BinResult(BaseModel):
+    bin_id: int
     bin_width: float
     bin_height: float
-    algorithm: str = "best_fit"  # "genetic", "bottom_left", "best_fit"
-    rotation_step: float = 90.0  # Grados
-    max_bins: Optional[int] = None  # Límite máximo de bins a usar
+    placed_pieces: List[Dict]
+    unplaced_pieces: List[Dict]
+    material_efficiency: float
+    execution_time: float
+    total_pieces: int
 
-class PlacedPiece(BaseModel):
-    id: str
-    points: List[Point]
-    x: float
-    y: float
-    rotation: float
-    bin_id: Optional[int] = 1  # ID del bin donde se colocó la pieza
-
-class BinInfo(BaseModel):
-    bin_id: int
-    pieces_count: int
-    utilization: float
-    total_area: float
-    placed_pieces: List[PlacedPiece]
+class NestingSummary(BaseModel):
+    total_bins: int
+    total_pieces_placed: int
+    total_pieces_unplaced: int
+    average_efficiency: float
+    total_execution_time: float
+    bin_efficiencies: List[float]
 
 class NestingResponse(BaseModel):
-    placed_pieces: List[PlacedPiece]
-    bins_used: int
-    utilization: float  # Utilización promedio
-    computation_time: float
-    bins_data: Optional[Dict[int, Dict[str, Any]]] = None  # Información detallada por bin
-    
-    class Config:
-        # Permitir campos adicionales para flexibilidad
-        extra = "allow"
+    success: bool
+    bins: List[BinResult]
+    summary: NestingSummary
+    message: str
