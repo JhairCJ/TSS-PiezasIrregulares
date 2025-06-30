@@ -54,7 +54,7 @@ const BinPackingApp = () => {
     bin_height: 150,
     bin_width_real: 200, // Dimensiones reales
     bin_height_real: 150,
-    unit: "cm" as const, // Unidad por defecto
+    unit: "mm" as const, // Unidad por defecto
     allow_rotation: true,
     rotation_angles: [0, 90, 180, 270],
     margin: 0,
@@ -139,7 +139,7 @@ const BinPackingApp = () => {
 
           {/* Panel de resultados */}
           <div className="lg:col-span-2">
-            <ResultsPanel results={results} loading={loading} error={error} />
+            <ResultsPanel results={results} loading={loading} error={error}  />
           </div>
         </div>
       </div>

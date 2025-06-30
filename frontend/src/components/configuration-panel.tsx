@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useRef, useState } from "react"
-import { Upload, Settings, Ruler, AlertTriangle,PlusCircle } from "lucide-react"
+import { Upload, Settings, Ruler, AlertTriangle, PlusCircle } from "lucide-react"
 import { algorithmOptions } from "./algorithm-options"
 import ShapeDesignerModal from "./shape-designer-modal"
 import PresetShapesModal from "./preset-shapes-modal"
@@ -274,7 +274,6 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
   const binWidthReal = inputData.bin_width_real || 200
   const binHeightReal = inputData.bin_height_real || 150
 
-
   const handleAddPresetShapes = (shapes: Array<{ id: string; points: [number, number][]; quantity: number }>) => {
     const updatedPieces = [...inputData.pieces, ...shapes]
     updateInputField("pieces", updatedPieces)
@@ -308,12 +307,12 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
               Importar Figuras
             </button>
             <button
-            onClick={handleOpenPresetShapes}
-            className="flex items-center justify-center px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
-          >
-            <PlusCircle className="mr-2" size={16} />
-            Agregar Figuras Predeterminadas
-          </button>
+              onClick={handleOpenPresetShapes}
+              className="flex items-center justify-center px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
+            >
+              <PlusCircle className="mr-2" size={16} />
+              Agregar Figuras Predeterminadas
+            </button>
           </div>
 
           <div className="grid grid-cols-3 gap-2">
@@ -480,6 +479,87 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
             </label>
           </div>
 
+          {/* Selector de ángulos de rotación */}
+          {inputData.allow_rotation && (
+            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <h4 className="font-semibold mb-3 text-yellow-800 flex items-center">
+                🔄 Ángulos de Rotación Permitidos
+              </h4>
+
+              {/* Grid de ángulos */}
+              <div className="grid grid-cols-4 gap-2 mb-3">
+                {[0, 45, 90, 135, 180, 225, 270, 315].map((angle) => {
+                  const isSelected = inputData.rotation_angles.includes(angle)
+                  return (
+                    <button
+                      key={angle}
+                      type="button"
+                      onClick={() => {
+                        const currentAngles = [...inputData.rotation_angles]
+                        if (isSelected) {
+                          // Remover ángulo
+                          const newAngles = currentAngles.filter((a) => a !== angle)
+                          updateInputField(
+                            "rotation_angles",
+                            newAngles.sort((a, b) => a - b),
+                          )
+                        } else {
+                          // Agregar ángulo
+                          const newAngles = [...currentAngles, angle].sort((a, b) => a - b)
+                          updateInputField("rotation_angles", newAngles)
+                        }
+                      }}
+                      className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                        isSelected
+                          ? "bg-blue-500 text-white border-2 border-blue-600"
+                          : "bg-white text-gray-700 border-2 border-gray-300 hover:border-blue-300 hover:bg-blue-50"
+                      }`}
+                    >
+                      {angle}°
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* Botones de acción rápida */}
+              <div className="flex gap-2 mb-3">
+                <button
+                  type="button"
+                  onClick={() => updateInputField("rotation_angles", [0, 90, 180, 270])}
+                  className="px-3 py-1 bg-gray-500 text-white rounded-md hover:bg-gray-600 text-xs"
+                >
+                  Por Defecto
+                </button>
+                <button
+                  type="button"
+                  onClick={() => updateInputField("rotation_angles", [0, 45, 90, 135, 180, 225, 270, 315])}
+                  className="px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600 text-xs"
+                >
+                  Todos
+                </button>
+              </div>
+
+              {/* Información */}
+              <div className="text-sm text-yellow-700">
+                <p className="mb-1">
+                  <strong>Seleccionados:</strong> {inputData.rotation_angles.length} ángulos
+                  {inputData.rotation_angles.length > 0 && (
+                    <span className="ml-2">({inputData.rotation_angles.sort((a, b) => a - b).join(", ")}°)</span>
+                  )}
+                </p>
+                {inputData.rotation_angles.length === 0 && (
+                  <p className="text-red-600 text-xs mt-1">
+                    ⚠️ Sin ángulos seleccionados, las piezas solo podrán usar su orientación original
+                  </p>
+                )}
+                <p className="text-xs text-yellow-600 mt-1">
+                  Más ángulos = mayor flexibilidad pero mayor tiempo de procesamiento
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Margen entre piezas */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Margen entre piezas ({UNITS[currentUnit].symbol})
