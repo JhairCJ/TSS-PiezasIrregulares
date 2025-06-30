@@ -52,6 +52,9 @@ const BinPackingApp = () => {
     ],
     bin_width: 200,
     bin_height: 150,
+    bin_width_real: 200, // Dimensiones reales
+    bin_height_real: 150,
+    unit: "mm" as const, // Unidad por defecto
     allow_rotation: true,
     rotation_angles: [0, 90, 180, 270],
     margin: 0,
@@ -117,7 +120,7 @@ const BinPackingApp = () => {
       <div className="max-w-7xl mx-auto">
         <header className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Optimizador de Bin Packing</h1>
-          <p className="text-gray-600">Visualiza y optimiza el empaquetado de piezas geométricas</p>
+          <p className="text-gray-600">Visualiza y optimiza el empaquetado de piezas geométricas con medidas reales</p>
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
