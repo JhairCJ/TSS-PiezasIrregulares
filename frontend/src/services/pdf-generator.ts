@@ -589,7 +589,7 @@ export const generatePDFReport = (results: PdfResults, config: ConfigData) => {
     doc.setFontSize(8)
     doc.setTextColor(128, 128, 128)
     doc.text(`Página ${i} de ${pageCount}`, 105, 290, { align: "center" })
-    doc.text("Generado por Optimizador de Bin Packing", 20, 290)
+    doc.text("Generado por Optimizador de Piezas Irregulares en Planos Rectangulares", 20, 290)
     doc.text(new Date().toLocaleDateString("es-ES"), 190, 290, { align: "right" })
   }
 

@@ -79,7 +79,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({ results, loading, error, co
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center p-4 bg-blue-50 rounded-lg">
               <div className="text-2xl font-bold text-blue-600">{results.summary.total_bins}</div>
-              <div className="text-sm text-gray-600">Bins utilizados</div>
+              <div className="text-sm text-gray-600">Contenedores utilizados</div>
             </div>
 
             <div className="text-center p-4 bg-green-50 rounded-lg">

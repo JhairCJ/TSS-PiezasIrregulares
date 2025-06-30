@@ -48,7 +48,7 @@ const BinVisualization: React.FC<BinVisualizationProps> = ({ bin, scale = 2 }) =
   return (
     <div className="bg-white p-4 rounded-lg shadow-lg">
       <h3 className="text-lg font-semibold mb-4 text-gray-800">
-        Bin {bin.bin_id} - Eficiencia: {bin.material_efficiency.toFixed(2)}%
+        Contenedor {bin.bin_id} - Eficiencia: {bin.material_efficiency.toFixed(2)}%
       </h3>
 
       <div className="relative border-2 border-gray-300 inline-block">
