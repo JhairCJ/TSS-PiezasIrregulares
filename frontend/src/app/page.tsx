@@ -1,28 +1,32 @@
 "use client";
 import React, { useState, useRef } from 'react';
 import { Upload, Play, RotateCcw, Download, Eye, Settings } from 'lucide-react';
+import { postNestData } from '../services/nestAPI';
 
-// Servicio API
-const postNestData = async (data) => {
-  try {
-    const response = await fetch("http://127.0.0.1:8000/nest", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Error ${response.status}: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error("Error en la solicitud:", error);
-    throw error;
+// Opciones de algoritmos con descripciones
+const algorithmOptions = [
+  {
+    value: "bottom_left",
+    label: "Esquina Inferior Izquierda",
+    description: "(rápido y equilibrado)",
+    speed: "⚡⚡⚡",
+    precision: "⭐⭐⭐"
+  },
+  {
+    value: "best_fit",
+    label: "Mejor Ajuste",
+    description: "(moderado y preciso)",
+    speed: "⚡⚡",
+    precision: "⭐⭐⭐⭐"
+  },
+  {
+    value: "genetic_algorithm",
+    label: "Algoritmo Genético",
+    description: "(muy lento y muy preciso)",
+    speed: "⚡",
+    precision: "⭐⭐⭐⭐⭐"
   }
-};
+];
 
 // Componente de visualización del bin
 const BinVisualization = ({ bin, scale = 2 }) => {
@@ -189,6 +193,8 @@ const BinPackingApp = () => {
     }));
   };
 
+  const selectedAlgorithm = algorithmOptions.find(alg => alg.value === inputData.strategy);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className="max-w-7xl mx-auto">
@@ -226,6 +232,37 @@ const BinPackingApp = () => {
                   onChange={handleFileUpload}
                   className="hidden"
                 />
+              </div>
+
+              {/* Selector de algoritmo */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Algoritmo de Optimización
+                </label>
+                <select
+                  value={inputData.strategy}
+                  onChange={(e) => updateInputField('strategy', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {algorithmOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label} {option.description}
+                    </option>
+                  ))}
+                </select>
+                
+                {/* Información del algoritmo seleccionado */}
+                {selectedAlgorithm && (
+                  <div className="mt-2 p-3 bg-gray-50 rounded-md">
+                    <div className="text-sm font-medium text-gray-700 mb-1">
+                      {selectedAlgorithm.label}
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-600">
+                      <span>Velocidad: {selectedAlgorithm.speed}</span>
+                      <span>Precisión: {selectedAlgorithm.precision}</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Configuración del bin */}
