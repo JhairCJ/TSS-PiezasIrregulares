@@ -7,8 +7,8 @@ from nesting_service import NestingService
 # Crear aplicación FastAPI
 app = FastAPI(
     title="Nesting API", 
-    description="API para optimización de nesting de piezas irregulares",
-    version="1.0.0"
+    description="API para optimización de nesting de piezas irregulares en múltiples bins",
+    version="3.0.0"
 )
 
 # Configurar CORS para permitir conexiones desde React
@@ -25,7 +25,7 @@ nesting_service = NestingService()
 
 @app.post("/nest", response_model=NestingResponse)
 async def nest_pieces(request: NestingRequest):
-    """Endpoint principal para realizar nesting de piezas"""
+    """Endpoint principal para realizar nesting de piezas en múltiples bins"""
     try:
         return nesting_service.process_nesting_request(request)
     except Exception as e:
@@ -34,7 +34,7 @@ async def nest_pieces(request: NestingRequest):
 @app.get("/")
 async def root():
     """Endpoint de prueba"""
-    return {"message": "Nesting API está funcionando", "version": "1.0.0"}
+    return {"message": "Nesting API está funcionando", "version": "3.0.0"}
 
 @app.get("/health")
 async def health_check():
