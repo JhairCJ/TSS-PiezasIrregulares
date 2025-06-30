@@ -139,7 +139,7 @@ const BinPackingApp = () => {
 
           {/* Panel de resultados */}
           <div className="lg:col-span-2">
-            <ResultsPanel results={results} loading={loading} error={error}  />
+            <ResultsPanel results={results} loading={loading} error={error} configData={inputData} />
           </div>
         </div>
       </div>
