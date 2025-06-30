@@ -42,3 +42,126 @@ a {
     color-scheme: dark;
   }
 }
+
+
+.pieces-panel {
+  padding: 1.5rem;
+  gap: 1.5rem;
+}
+
+/* Espaciado para las tarjetas de piezas */
+.piece-card {
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Espaciado para el área principal */
+.main-area {
+  padding: 2rem;
+  gap: 2rem;
+}
+
+/* Espaciado para el canvas */
+.canvas-container {
+  position: relative;
+  margin: 20px auto;
+  border: 2px solid #000;
+  background-color: #fff;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.canvas-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.piece-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  overflow-y: auto;
+}
+
+.piece-item {
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: white;
+  transition: all 0.2s;
+}
+
+.piece-item:hover {
+  border-color: #94a3b8;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+/* Espaciado para el panel derecho */
+.config-panel {
+  padding: 1.5rem;
+  gap: 2rem;
+}
+
+/* Espaciado entre secciones */
+.section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+}
+
+/* Espaciado para inputs y labels */
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-label {
+  margin-bottom: 0.75rem;
+  display: block;
+}
+
+.form-input {
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Espaciado para botones */
+.button-group {
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+/* Espaciado para estadísticas */
+.stats-grid {
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+}
+
+/* Responsivo - reducir espaciado en pantallas pequeñas */
+@media (max-width: 768px) {
+  .pieces-panel,
+  .config-panel {
+    padding: 1rem;
+  }
+  
+  .main-area {
+    padding: 1rem;
+    gap: 1rem;
+  }
+  
+  
+}  .piece-item {
+    padding: 10px;
+  }
+  
+  .canvas-controls {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+}
