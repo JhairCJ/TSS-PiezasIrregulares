@@ -214,7 +214,7 @@ export const generatePDFReport = (results: PdfResults, config: ConfigData) => {
 
   doc.setFontSize(12)
   doc.setFont("helvetica", "normal")
-  doc.text("Bin Packing - Análisis de Resultados", 105, 26, { align: "center" })
+  doc.text("Optimizacion de Piezas irregulares - Análisis de Resultados", 105, 26, { align: "center" })
 
   yPosition = 45
 
@@ -594,7 +594,7 @@ export const generatePDFReport = (results: PdfResults, config: ConfigData) => {
   }
 
   // Guardar el PDF
-  const fileName = `informe_bin_packing_${new Date().toISOString().split("T")[0]}.pdf`
+  const fileName = `informe_optimizador_piezas_irregulares_${new Date().toISOString().split("T")[0]}.pdf`
   doc.save(fileName)
 }
 

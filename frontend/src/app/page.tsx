@@ -99,7 +99,7 @@ const BinPackingApp = () => {
     if (results) {
       const dataStr = JSON.stringify(results, null, 2)
       const dataUri = "data:application/json;charset=utf-8," + encodeURIComponent(dataStr)
-      const exportFileDefaultName = "bin_packing_results.json"
+      const exportFileDefaultName = "contenerizacion_results.json"
 
       const linkElement = document.createElement("a")
       linkElement.setAttribute("href", dataUri)
