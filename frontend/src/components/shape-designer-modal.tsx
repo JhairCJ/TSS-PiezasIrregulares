@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { X, Trash2, Undo, Check, RotateCw } from "lucide-react"
 
 interface Point {
@@ -13,19 +13,71 @@ interface ShapeDesignerModalProps {
   isOpen: boolean
   onClose: () => void
   onSaveShape: (shape: { id: string; points: [number, number][]; quantity: number }) => void
+  editingShape?: {
+    id: string
+    points: [number, number][]
+    quantity: number
+    index: number
+  } | null
 }
 
-const ShapeDesignerModal: React.FC<ShapeDesignerModalProps> = ({ isOpen, onClose, onSaveShape }) => {
+const ShapeDesignerModal: React.FC<ShapeDesignerModalProps> = ({
+  isOpen,
+  onClose,
+  onSaveShape,
+  editingShape = null,
+}) => {
   const [points, setPoints] = useState<Point[]>([])
   const [isDrawing, setIsDrawing] = useState(false)
   const [draggedPointIndex, setDraggedPointIndex] = useState<number | null>(null)
   const [shapeId, setShapeId] = useState("")
   const [quantity, setQuantity] = useState(1)
-  const [canvasSize] = useState({ width: 500, height: 350 })
+  const [canvasSize] = useState({ width: 700, height: 500 })
   const [gridSize] = useState(10)
   const [showGrid, setShowGrid] = useState(true)
   const [snapToGrid, setSnapToGrid] = useState(true)
+  const [isEditMode, setIsEditMode] = useState(false)
   const svgRef = useRef<SVGSVGElement>(null)
+
+  // Cargar figura para editar cuando se abre el modal
+  useEffect(() => {
+    if (isOpen && editingShape) {
+      // Modo edición
+      setIsEditMode(true)
+      setShapeId(editingShape.id)
+      setQuantity(editingShape.quantity)
+
+      // Convertir puntos y centrarlos en el canvas
+      const shapePoints = editingShape.points.map(([x, y]) => ({ x, y }))
+
+      // Calcular offset para centrar la figura
+      if (shapePoints.length > 0) {
+        const minX = Math.min(...shapePoints.map((p) => p.x))
+        const maxX = Math.max(...shapePoints.map((p) => p.x))
+        const minY = Math.min(...shapePoints.map((p) => p.y))
+        const maxY = Math.max(...shapePoints.map((p) => p.y))
+
+        const shapeWidth = maxX - minX
+        const shapeHeight = maxY - minY
+
+        const offsetX = (canvasSize.width - shapeWidth) / 2 - minX
+        const offsetY = (canvasSize.height - shapeHeight) / 2 - minY
+
+        const centeredPoints = shapePoints.map((p) => ({
+          x: p.x + offsetX,
+          y: p.y + offsetY,
+        }))
+
+        setPoints(centeredPoints)
+      }
+    } else if (isOpen && !editingShape) {
+      // Modo creación nueva figura
+      setIsEditMode(false)
+      setPoints([])
+      setShapeId("")
+      setQuantity(1)
+    }
+  }, [isOpen, editingShape, canvasSize])
 
   const snapPoint = (point: Point): Point => {
     if (!snapToGrid) return point
@@ -78,10 +130,24 @@ const ShapeDesignerModal: React.FC<ShapeDesignerModalProps> = ({ isOpen, onClose
     setPoints((prev) => prev.slice(0, -1))
   }
 
-  const closeShape = () => {
-    if (points.length >= 3) {
-      setIsDrawing(false)
+  const deletePoint = (index: number) => {
+    if (points.length > 3) {
+      setPoints((prev) => prev.filter((_, i) => i !== index))
     }
+  }
+
+  const addPointBetween = (index: number) => {
+    const currentPoint = points[index]
+    const nextPoint = points[(index + 1) % points.length]
+
+    const midPoint = snapPoint({
+      x: (currentPoint.x + nextPoint.x) / 2,
+      y: (currentPoint.y + nextPoint.y) / 2,
+    })
+
+    const newPoints = [...points]
+    newPoints.splice(index + 1, 0, midPoint)
+    setPoints(newPoints)
   }
 
   const saveShape = () => {
@@ -96,12 +162,14 @@ const ShapeDesignerModal: React.FC<ShapeDesignerModalProps> = ({ isOpen, onClose
         id: shapeId.trim(),
         points: normalizedPoints,
         quantity: quantity,
-      })
+        ...(isEditMode && editingShape && { editIndex: editingShape.index }),
+      } as any)
 
       // Reset form
       setPoints([])
       setShapeId("")
       setQuantity(1)
+      setIsEditMode(false)
       onClose()
     }
   }
@@ -124,6 +192,14 @@ const ShapeDesignerModal: React.FC<ShapeDesignerModalProps> = ({ isOpen, onClose
     })
 
     setPoints(rotatedPoints)
+  }
+
+  const handleClose = () => {
+    setPoints([])
+    setShapeId("")
+    setQuantity(1)
+    setIsEditMode(false)
+    onClose()
   }
 
   // Generar grid
@@ -149,17 +225,19 @@ const ShapeDesignerModal: React.FC<ShapeDesignerModalProps> = ({ isOpen, onClose
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[95vh] overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-7xl max-h-[95vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-3 sm:p-4 border-b flex-shrink-0">
-          <h2 className="text-lg sm:text-xl font-semibold">Diseñador de Figuras</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+          <h2 className="text-lg sm:text-xl font-semibold">
+            {isEditMode ? `Editando: ${editingShape?.id}` : "Diseñador de Figuras"}
+          </h2>
+          <button onClick={handleClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
             <X size={20} />
           </button>
         </div>
 
-        <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
+        <div className="flex flex-col xl:flex-row flex-1 overflow-hidden">
           {/* Canvas */}
           <div className="flex-1 p-3 sm:p-4 overflow-auto">
             <div
@@ -212,28 +290,87 @@ const ShapeDesignerModal: React.FC<ShapeDesignerModalProps> = ({ isOpen, onClose
                     {points.length > 2 && (
                       <polygon
                         points={points.map((p) => `${p.x},${p.y}`).join(" ")}
-                        fill="#3b82f6"
+                        fill={isEditMode ? "#10b981" : "#3b82f6"}
                         fillOpacity="0.2"
-                        stroke="#3b82f6"
+                        stroke={isEditMode ? "#10b981" : "#3b82f6"}
                         strokeWidth="2"
                       />
                     )}
+
+                    {/* Puntos de inserción (líneas entre puntos) */}
+                    {isEditMode &&
+                      points.length > 2 &&
+                      points.map((point, index) => {
+                        const nextPoint = points[(index + 1) % points.length]
+                        const midX = (point.x + nextPoint.x) / 2
+                        const midY = (point.y + nextPoint.y) / 2
+
+                        return (
+                          <circle
+                            key={`add-${index}`}
+                            cx={midX}
+                            cy={midY}
+                            r="4"
+                            fill="#22c55e"
+                            stroke="white"
+                            strokeWidth="1"
+                            className="cursor-pointer hover:r-6 transition-all opacity-60 hover:opacity-100"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              addPointBetween(index)
+                            }}
+                            title="Agregar punto aquí"
+                          />
+                        )
+                      })}
                   </>
                 )}
 
                 {/* Puntos */}
                 {points.map((point, index) => (
-                  <circle
-                    key={index}
-                    cx={point.x}
-                    cy={point.y}
-                    r="6"
-                    fill={index === 0 ? "#ef4444" : "#3b82f6"}
-                    stroke="white"
-                    strokeWidth="2"
-                    className="cursor-move hover:r-8 transition-all"
-                    onMouseDown={(e) => handlePointMouseDown(e, index)}
-                  />
+                  <g key={index}>
+                    <circle
+                      cx={point.x}
+                      cy={point.y}
+                      r="8"
+                      fill={index === 0 ? "#ef4444" : isEditMode ? "#10b981" : "#3b82f6"}
+                      stroke="white"
+                      strokeWidth="2"
+                      className="cursor-move hover:r-10 transition-all"
+                      onMouseDown={(e) => handlePointMouseDown(e, index)}
+                    />
+                    {/* Botón de eliminar punto (solo en modo edición y si hay más de 3 puntos) */}
+                    {isEditMode && points.length > 3 && (
+                      <circle
+                        cx={point.x + 12}
+                        cy={point.y - 12}
+                        r="6"
+                        fill="#ef4444"
+                        stroke="white"
+                        strokeWidth="1"
+                        className="cursor-pointer hover:r-8 transition-all"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          deletePoint(index)
+                        }}
+                        title="Eliminar punto"
+                      />
+                    )}
+                    {isEditMode && points.length > 3 && (
+                      <text
+                        x={point.x + 12}
+                        y={point.y - 12}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        fontSize="8"
+                        fill="white"
+                        fontWeight="bold"
+                        pointerEvents="none"
+                      >
+                        ×
+                      </text>
+                    )}
+                  </g>
                 ))}
 
                 {/* Números de puntos */}
@@ -241,9 +378,10 @@ const ShapeDesignerModal: React.FC<ShapeDesignerModalProps> = ({ isOpen, onClose
                   <text
                     key={`label-${index}`}
                     x={point.x}
-                    y={point.y - 12}
+                    y={point.y - 15}
                     textAnchor="middle"
-                    fontSize="12"
+                    dominantBaseline="middle"
+                    fontSize="14"
                     fill="#374151"
                     fontWeight="bold"
                     pointerEvents="none"
@@ -255,10 +393,16 @@ const ShapeDesignerModal: React.FC<ShapeDesignerModalProps> = ({ isOpen, onClose
             </div>
 
             {/* Información */}
-            <div className="mt-3 text-xs sm:text-sm text-gray-600 space-y-1">
+            <div className="mt-4 text-sm text-gray-600 space-y-1 max-w-2xl mx-auto">
               <p>• Haz clic para agregar puntos</p>
               <p>• Arrastra los puntos para moverlos</p>
               <p>• El punto rojo es el inicio de la figura</p>
+              {isEditMode && (
+                <>
+                  <p>• Los círculos verdes permiten agregar puntos</p>
+                  <p>• Los círculos rojos eliminan puntos (mín. 3)</p>
+                </>
+              )}
               <p>
                 • Puntos actuales: <span className="font-semibold text-blue-600">{points.length}</span>
               </p>
@@ -266,11 +410,11 @@ const ShapeDesignerModal: React.FC<ShapeDesignerModalProps> = ({ isOpen, onClose
           </div>
 
           {/* Panel de controles */}
-          <div className="w-full lg:w-80 p-3 sm:p-4 border-t lg:border-t-0 lg:border-l bg-gray-50 overflow-auto">
+          <div className="w-full xl:w-80 p-3 sm:p-4 border-t xl:border-t-0 xl:border-l bg-gray-50 overflow-auto">
             <div className="space-y-4">
               {/* Información de la figura */}
               <div className="bg-white p-4 rounded-lg">
-                <h3 className="font-semibold mb-3">Información de la Figura</h3>
+                <h3 className="font-semibold mb-3">{isEditMode ? "Editar Figura" : "Nueva Figura"}</h3>
                 <div className="space-y-3">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Nombre de la figura *</label>
@@ -375,6 +519,10 @@ const ShapeDesignerModal: React.FC<ShapeDesignerModalProps> = ({ isOpen, onClose
                     </span>
                   </div>
                   <div className="flex justify-between">
+                    <span>Modo:</span>
+                    <span className="text-blue-600 font-semibold">{isEditMode ? "Editando" : "Creando"}</span>
+                  </div>
+                  <div className="flex justify-between">
                     <span>Listo para guardar:</span>
                     <span className={canSave ? "text-green-600 font-semibold" : "text-gray-500"}>
                       {canSave ? "✓ Sí" : "✗ No"}
@@ -387,10 +535,14 @@ const ShapeDesignerModal: React.FC<ShapeDesignerModalProps> = ({ isOpen, onClose
               <button
                 onClick={saveShape}
                 disabled={!canSave}
-                className="w-full flex items-center justify-center px-4 py-3 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-colors"
+                className={`w-full flex items-center justify-center px-4 py-3 text-white rounded-md font-semibold transition-colors ${
+                  isEditMode
+                    ? "bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    : "bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                }`}
               >
                 <Check className="mr-2" size={16} />
-                Guardar Figura
+                {isEditMode ? "Actualizar Figura" : "Guardar Figura"}
               </button>
 
               {!canSave && (
