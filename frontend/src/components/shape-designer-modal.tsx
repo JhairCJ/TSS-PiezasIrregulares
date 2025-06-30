@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useRef, useEffect } from "react"
-import { X, Trash2, Undo, Check, RotateCw } from "lucide-react"
+import { X, Trash2, Undo, Check, RotateCw, Maximize2 } from "lucide-react"
 
 interface Point {
   x: number
@@ -21,6 +21,16 @@ interface ShapeDesignerModalProps {
   } | null
 }
 
+// Unidades de medida y sus factores de conversión (todo a milímetros como base)
+const UNITS = {
+  mm: { label: "Milímetros", factor: 1, symbol: "mm" },
+  cm: { label: "Centímetros", factor: 10, symbol: "cm" },
+  m: { label: "Metros", factor: 1000, symbol: "m" },
+  in: { label: "Pulgadas", factor: 25.4, symbol: "in" },
+} as const
+
+type UnitType = keyof typeof UNITS
+
 const ShapeDesignerModal: React.FC<ShapeDesignerModalProps> = ({
   isOpen,
   onClose,
@@ -30,6 +40,7 @@ const ShapeDesignerModal: React.FC<ShapeDesignerModalProps> = ({
   const [points, setPoints] = useState<Point[]>([])
   const [isDrawing, setIsDrawing] = useState(false)
   const [draggedPointIndex, setDraggedPointIndex] = useState<number | null>(null)
+  const [isDragging, setIsDragging] = useState(false) // Para prevenir clicks accidentales
   const [shapeId, setShapeId] = useState("")
   const [quantity, setQuantity] = useState(1)
   const [canvasSize] = useState({ width: 700, height: 500 })
@@ -37,7 +48,43 @@ const ShapeDesignerModal: React.FC<ShapeDesignerModalProps> = ({
   const [showGrid, setShowGrid] = useState(true)
   const [snapToGrid, setSnapToGrid] = useState(true)
   const [isEditMode, setIsEditMode] = useState(false)
+  const [selectedUnit, setSelectedUnit] = useState<UnitType>("mm")
+  const [customWidth, setCustomWidth] = useState<string>("")
+  const [customHeight, setCustomHeight] = useState<string>("")
   const svgRef = useRef<SVGSVGElement>(null)
+
+  // Calcular dimensiones de la figura
+  const getShapeDimensions = () => {
+    if (points.length === 0) return { width: 0, height: 0, minX: 0, minY: 0, maxX: 0, maxY: 0 }
+
+    const minX = Math.min(...points.map((p) => p.x))
+    const maxX = Math.max(...points.map((p) => p.x))
+    const minY = Math.min(...points.map((p) => p.y))
+    const maxY = Math.max(...points.map((p) => p.y))
+
+    return {
+      width: maxX - minX,
+      height: maxY - minY,
+      minX,
+      minY,
+      maxX,
+      maxY,
+    }
+  }
+
+  // Convertir dimensiones según la unidad seleccionada
+  const convertDimension = (pixels: number, fromUnit: UnitType = "mm", toUnit: UnitType = selectedUnit) => {
+    // Asumimos que 1 pixel = 1mm para simplicidad
+    const mmValue = pixels * UNITS[fromUnit].factor
+    return mmValue / UNITS[toUnit].factor
+  }
+
+  // Actualizar campos de dimensiones cuando cambian los puntos o la unidad
+  useEffect(() => {
+    const dimensions = getShapeDimensions()
+    setCustomWidth(convertDimension(dimensions.width).toFixed(2))
+    setCustomHeight(convertDimension(dimensions.height).toFixed(2))
+  }, [points, selectedUnit])
 
   // Cargar figura para editar cuando se abre el modal
   useEffect(() => {
@@ -100,7 +147,8 @@ const ShapeDesignerModal: React.FC<ShapeDesignerModalProps> = ({
   }
 
   const handleSVGClick = (event: React.MouseEvent<SVGSVGElement>) => {
-    if (draggedPointIndex !== null) return
+    // Prevenir agregar puntos si acabamos de terminar de arrastrar
+    if (isDragging || draggedPointIndex !== null) return
 
     const point = getSVGPoint(event)
     setPoints((prev) => [...prev, point])
@@ -109,16 +157,24 @@ const ShapeDesignerModal: React.FC<ShapeDesignerModalProps> = ({
   const handlePointMouseDown = (event: React.MouseEvent, index: number) => {
     event.stopPropagation()
     setDraggedPointIndex(index)
+    setIsDragging(false) // Reset dragging state
   }
 
   const handleMouseMove = (event: React.MouseEvent<SVGSVGElement>) => {
     if (draggedPointIndex === null) return
 
+    setIsDragging(true) // Mark that we're dragging
     const point = getSVGPoint(event)
     setPoints((prev) => prev.map((p, i) => (i === draggedPointIndex ? point : p)))
   }
 
   const handleMouseUp = () => {
+    if (draggedPointIndex !== null) {
+      // Small delay to prevent click event after drag
+      setTimeout(() => {
+        setIsDragging(false)
+      }, 50)
+    }
     setDraggedPointIndex(null)
   }
 
@@ -148,6 +204,43 @@ const ShapeDesignerModal: React.FC<ShapeDesignerModalProps> = ({
     const newPoints = [...points]
     newPoints.splice(index + 1, 0, midPoint)
     setPoints(newPoints)
+  }
+
+  const resizeShape = (newWidth: number, newHeight: number) => {
+    if (points.length === 0) return
+
+    const dimensions = getShapeDimensions()
+    if (dimensions.width === 0 || dimensions.height === 0) return
+
+    const scaleX = newWidth / dimensions.width
+    const scaleY = newHeight / dimensions.height
+
+    const resizedPoints = points.map((point) => ({
+      x: dimensions.minX + (point.x - dimensions.minX) * scaleX,
+      y: dimensions.minY + (point.y - dimensions.minY) * scaleY,
+    }))
+
+    setPoints(resizedPoints)
+  }
+
+  const handleWidthChange = (value: string) => {
+    setCustomWidth(value)
+    const numValue = Number.parseFloat(value)
+    if (!isNaN(numValue) && numValue > 0) {
+      const pixelWidth = convertDimension(numValue, selectedUnit, "mm")
+      const dimensions = getShapeDimensions()
+      resizeShape(pixelWidth, dimensions.height)
+    }
+  }
+
+  const handleHeightChange = (value: string) => {
+    setCustomHeight(value)
+    const numValue = Number.parseFloat(value)
+    if (!isNaN(numValue) && numValue > 0) {
+      const pixelHeight = convertDimension(numValue, selectedUnit, "mm")
+      const dimensions = getShapeDimensions()
+      resizeShape(dimensions.width, pixelHeight)
+    }
   }
 
   const saveShape = () => {
@@ -221,11 +314,12 @@ const ShapeDesignerModal: React.FC<ShapeDesignerModalProps> = ({
 
   // Verificar si se puede guardar
   const canSave = points.length >= 3 && shapeId.trim().length > 0
+  const dimensions = getShapeDimensions()
 
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-7xl max-h-[95vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-3 sm:p-4 border-b flex-shrink-0">
@@ -440,6 +534,77 @@ const ShapeDesignerModal: React.FC<ShapeDesignerModalProps> = ({
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                     />
                   </div>
+                </div>
+              </div>
+
+              {/* Dimensiones y unidades */}
+              <div className="bg-white p-4 rounded-lg">
+                <h3 className="font-semibold mb-3 flex items-center">
+                  <Maximize2 className="mr-2" size={16} />
+                  Dimensiones
+                </h3>
+
+                {/* Selector de unidad */}
+                <div className="mb-3">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Unidad de medida</label>
+                  <select
+                    value={selectedUnit}
+                    onChange={(e) => setSelectedUnit(e.target.value as UnitType)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  >
+                    {Object.entries(UNITS).map(([key, unit]) => (
+                      <option key={key} value={key}>
+                        {unit.label} ({unit.symbol})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Ancho ({UNITS[selectedUnit].symbol})
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0.01"
+                      value={customWidth}
+                      onChange={(e) => handleWidthChange(e.target.value)}
+                      disabled={points.length === 0}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm disabled:bg-gray-100"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Alto ({UNITS[selectedUnit].symbol})
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0.01"
+                      value={customHeight}
+                      onChange={(e) => handleHeightChange(e.target.value)}
+                      disabled={points.length === 0}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm disabled:bg-gray-100"
+                    />
+                  </div>
+
+                  {points.length > 0 && (
+                    <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
+                      <p>Dimensiones actuales:</p>
+                      <p>
+                        • {convertDimension(dimensions.width).toFixed(2)} ×{" "}
+                        {convertDimension(dimensions.height).toFixed(2)} {UNITS[selectedUnit].symbol}
+                      </p>
+                      <p>
+                        • Área aprox:{" "}
+                        {(convertDimension(dimensions.width) * convertDimension(dimensions.height)).toFixed(2)}{" "}
+                        {UNITS[selectedUnit].symbol}²
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 
