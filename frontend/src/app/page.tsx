@@ -130,7 +130,7 @@ const BinPackingApp = () => {
     bin_height: 150,
     allow_rotation: true,
     rotation_angles: [0, 90, 180, 270],
-    margin: 2,
+    margin: 0,
     strategy: "bottom_left"
   });
 
@@ -250,18 +250,6 @@ const BinPackingApp = () => {
                     type="number"
                     value={inputData.bin_height}
                     onChange={(e) => updateInputField('bin_height', parseInt(e.target.value))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Margen
-                  </label>
-                  <input
-                    type="number"
-                    value={inputData.margin}
-                    onChange={(e) => updateInputField('margin', parseInt(e.target.value))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
